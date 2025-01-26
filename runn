@@ -1,0 +1,145 @@
+import subprocess
+import os
+import time
+import sys
+import requests  # HTTP requests ke liye
+
+# Permanent folder path
+folder_path = '/storage/emulated/0/AUTOOBB/SCRIPTS/'
+
+# GitHub Raw URL for the key
+KEY_URL = "https://raw.githubusercontent.com/katagirikun/key-storage/refs/heads/main/key.txt"
+
+# Define colors for text
+colors = [
+    '\033[30m',  # Black
+    '\033[37m',  # White
+    '\033[90m',  # Gray
+    '\033[0m'    # Reset
+]
+
+# Bold font escape code for terminal
+BOLD = '\033[1m'
+
+# Loading bar with blocks
+loading_bar = [
+    "[□□□□□□]", "[■■□□□□]", "[■■■□□□]", "[■■■■□□]", "[■■■■■□]", "[■■■■■■]"
+]
+
+# Function to simulate block-based loading
+def block_loading():
+    for bar in loading_bar:
+        sys.stdout.write(f"\r{bar}")
+        sys.stdout.flush()
+        time.sleep(0.5)
+    print()
+
+# Function to fetch the key from GitHub raw URL
+def fetch_server_key():
+    try:
+        response = requests.get(KEY_URL, timeout=5)
+        if response.status_code == 200:
+            return response.text.strip()  # Remove whitespace from key
+        else:
+            print(f"{BOLD}{colors[1]}Error: Unable to fetch key from server (Status Code: {response.status_code}).{colors[3]}")
+            return None
+    except requests.exceptions.RequestException as e:
+        print(f"{BOLD}{colors[1]}Network Error: {e}{colors[3]}")
+        return None
+
+# Function to verify the key
+def verify_key(server_key):
+    print(f"{BOLD}{colors[1]}Enter the activation key to proceed:{colors[3]}")
+    user_key = input("Key: ").strip()  # Take user input
+    if user_key == server_key:
+        print(f"{BOLD}{colors[1]}Key Verified Successfully!{colors[3]}")
+        return True
+    else:
+        print(f"{BOLD}{colors[1]}Invalid Key! Access Denied.{colors[3]}")
+        return False
+
+# Function to print text in black, white, and gray with bold font
+def print_menu():
+    options = [
+        f"{BOLD}{colors[1]}1. MOD GUN SKIN{colors[3]}",
+        f"{BOLD}{colors[1]}2. MOD HIT EFFECT{colors[3]}"
+    ]
+    for option in options:
+        print(option)
+        time.sleep(0.5)
+
+# Function to simulate "Installing Files", "Checking User", etc.
+def simulate_installation_process():
+    print(f"{BOLD}{colors[1]}Installing Files...{colors[3]}")
+    block_loading()
+
+    print(f"{BOLD}{colors[1]}Checking User...{colors[3]}")
+    block_loading()
+
+    print(f"{BOLD}{colors[1]}Verifying System Compatibility...{colors[3]}")
+    block_loading()
+
+    print(f"{BOLD}{colors[1]}Setting up Environment...{colors[3]}")
+    block_loading()
+
+# Function to run the selected script
+def run_script(script_name):
+    script_path = os.path.join(folder_path, script_name)
+    if os.path.exists(script_path):
+        subprocess.run(['python', script_path])
+    else:
+        print(f"Error: {script_name} not found!")
+
+# Function to clear the screen
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+# Main function to create a unique user experience
+def main():
+    clear_screen()  # Clear screen before starting
+
+    print(f"{BOLD}{colors[1]}Initializing the MOD Tool...{colors[3]}")
+
+    # Fetch the key from server
+    server_key = fetch_server_key()
+    if not server_key:
+        print(f"{BOLD}{colors[1]}Exiting the program...{colors[3]}")
+        sys.exit(1)  # Exit if unable to fetch key
+
+    # Verify the key before proceeding
+    if not verify_key(server_key):
+        print(f"{BOLD}{colors[1]}Exiting the program...{colors[3]}")
+        sys.exit(1)  # Exit if key verification fails
+
+    # Simulate installation and checks before main tool execution
+    simulate_installation_process()
+
+    clear_screen()  # Clear screen again before showing the main menu
+
+    print(f"{BOLD}{colors[1]}Welcome to the MOD Tool!{colors[3]}")
+    print(f"{colors[2]}Please select an option to begin.{colors[3]}")
+
+    # Show the available options
+    print_menu()
+
+    # Get user input and simulate loading before running the selected script
+    user_input = input("\nEnter your choice (1 or 2): ")
+    print(f"{BOLD}{colors[1]}Loading selected option...{colors[3]}")
+
+    # Simulate the loading bar again
+    block_loading()
+
+    if user_input == '1':
+        print(f"{BOLD}{colors[1]}Starting MOD GUN SKIN...{colors[3]}")
+        run_script("gun")  # Execute the 'gun' script
+    elif user_input == '2':
+        print(f"{BOLD}{colors[1]}Starting MOD HIT EFFECT...{colors[3]}")
+        run_script("hit2")  # Execute the 'hit2' script
+    else:
+        print(f"{BOLD}{colors[1]}Invalid choice. Please enter '1' or '2'.{colors[3]}")
+
+    print(f"{BOLD}{colors[1]}Thank you for using the MOD Tool!{colors[3]}")
+
+# Execute main program
+if __name__ == "__main__":
+    main()
