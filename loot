@@ -1,0 +1,145 @@
+import os
+
+def read_guns_from_file(guns_file_path):
+    gun_dict = {}
+    with open(guns_file_path, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            parts = line.strip().split(' | ')
+            if len(parts) == 3:
+                gun_id, hex_code, gun_name = parts
+                gun_dict[gun_name] = hex_code
+    return gun_dict
+
+def clean_hex_code(hex_code):
+    """Remove any non-hexadecimal characters."""
+    return ''.join(c for c in hex_code if c in '0123456789abcdefABCDEF')
+
+def search_guns(guns_dict, search_term):
+    """Search guns by a given term and return a filtered list."""
+    return {name: hex_code for name, hex_code in guns_dict.items() if search_term.lower() in name.lower()}
+
+def replace_hex_codes(folder_path, gun_pairs, output_folder):
+    # Folder mein saari .dat files ke liye loop
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.dat'):
+            file_path = os.path.join(folder_path, filename)
+            
+            # File ko read karna
+            with open(file_path, 'rb') as file:
+                file_data = file.read()
+
+            updated_data = file_data
+
+            # Loop through all gun pairs (gun1, gun2)
+            for gun1_hex, gun2_hex in gun_pairs:
+                gun1_hex_clean = clean_hex_code(gun1_hex)
+                gun2_hex_clean = clean_hex_code(gun2_hex)
+
+                # Check if gun2's hex exists in the file, if so replace it with gun1's hex
+                if bytes.fromhex(gun2_hex_clean) in updated_data:
+                    updated_data = updated_data.replace(bytes.fromhex(gun2_hex_clean), bytes.fromhex(gun1_hex_clean))
+                    print(f"Gun2 hex found in {filename}. Replaced with Gun1's hex.")
+            
+            # Save the file only if there was a change
+            if updated_data != file_data:
+                output_file_path = os.path.join(output_folder, filename)
+                with open(output_file_path, 'wb') as output_file:
+                    output_file.write(updated_data)
+                print(f"Edited file saved: {filename}")
+            else:
+                print(f"No change in {filename}. Skipping...")
+
+    print(f"Process completed. Edited files are saved to {output_folder}")
+
+# Example usage
+guns_file_path = '/storage/emulated/0/AUTOOBB/ALL TEXT SOURCE/all_guns.txt'
+folder_path = '/storage/emulated/0/AUTOOBB/LOOTBOX/'
+output_folder = '/storage/emulated/0/AUTOOBB/RESULTS/'
+
+# Guns aur unke hex codes ko read karna
+guns_dict = read_guns_from_file(guns_file_path)
+
+# Select multiple guns for Gun 1 and Gun 2
+gun_pairs = []
+
+# Search for Gun 1
+search_term_1 = input("Enter the search term for Gun 1: ")
+search_results_1 = search_guns(guns_dict, search_term_1)
+
+if search_results_1:
+    print("\nFound Guns for Gun 1:")
+    for idx, gun_name in enumerate(search_results_1.keys(), 1):
+        print(f"{idx}. {gun_name}")
+
+    selection_gun1 = int(input("Enter the number of the first gun: "))
+    gun1_name = list(search_results_1.keys())[selection_gun1 - 1]
+    gun1_hex = search_results_1[gun1_name]
+    print(f"Selected Gun 1: {gun1_name} - {gun1_hex}")
+else:
+    print("No guns found with that search term.")
+
+# Search for Gun 2
+search_term_2 = input("\nEnter the search term for Gun 2: ")
+search_results_2 = search_guns(guns_dict, search_term_2)
+
+if search_results_2:
+    print("\nFound Guns for Gun 2:")
+    for idx, gun_name in enumerate(search_results_2.keys(), 1):
+        print(f"{idx}. {gun_name}")
+
+    selection_gun2 = int(input("Enter the number of the second gun: "))
+    gun2_name = list(search_results_2.keys())[selection_gun2 - 1]
+    gun2_hex = search_results_2[gun2_name]
+    print(f"Selected Gun 2: {gun2_name} - {gun2_hex}")
+else:
+    print("No guns found with that search term.")
+
+# Add selected gun pair to the list
+gun_pairs.append((gun1_hex, gun2_hex))
+
+# Ask if you want to add more gun pairs
+while True:
+    more_guns = input("\nDo you want to select another pair of guns to replace? (yes/no): ").strip().lower()
+    if more_guns == 'yes':
+        # Search for Gun 1
+        search_term_1 = input("Enter the search term for Gun 1: ")
+        search_results_1 = search_guns(guns_dict, search_term_1)
+
+        if search_results_1:
+            print("\nFound Guns for Gun 1:")
+            for idx, gun_name in enumerate(search_results_1.keys(), 1):
+                print(f"{idx}. {gun_name}")
+
+            selection_gun1 = int(input("Enter the number of the first gun: "))
+            gun1_name = list(search_results_1.keys())[selection_gun1 - 1]
+            gun1_hex = search_results_1[gun1_name]
+            print(f"Selected Gun 1: {gun1_name} - {gun1_hex}")
+        else:
+            print("No guns found with that search term.")
+
+        # Search for Gun 2
+        search_term_2 = input("\nEnter the search term for Gun 2: ")
+        search_results_2 = search_guns(guns_dict, search_term_2)
+
+        if search_results_2:
+            print("\nFound Guns for Gun 2:")
+            for idx, gun_name in enumerate(search_results_2.keys(), 1):
+                print(f"{idx}. {gun_name}")
+
+            selection_gun2 = int(input("Enter the number of the second gun: "))
+            gun2_name = list(search_results_2.keys())[selection_gun2 - 1]
+            gun2_hex = search_results_2[gun2_name]
+            print(f"Selected Gun 2: {gun2_name} - {gun2_hex}")
+        else:
+            print("No guns found with that search term.")
+
+        # Add selected gun pair to the list
+        gun_pairs.append((gun1_hex, gun2_hex))
+    elif more_guns == 'no':
+        break
+    else:
+        print("Invalid input. Please enter 'yes' or 'no'.")
+
+# Now call the function to replace hex codes
+replace_hex_codes(folder_path, gun_pairs, output_folder)

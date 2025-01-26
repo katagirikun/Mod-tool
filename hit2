@@ -1,0 +1,138 @@
+import os
+
+# Fixed paths
+DAT_FILES_PATH = "/storage/emulated/0/AUTOOBB/HIT EFFECT DAT/"
+ALL_GUNS_PATH = "/storage/emulated/0/AUTOOBB/ALL TEXT SOURCE/all_guns.txt"
+OUTPUT_FOLDER = "/storage/emulated/0/AUTOOBB/RESULTS/"
+
+# Function to read all_guns.txt and display options for selection
+def read_guns(file_path):
+    guns = []
+    with open(file_path, 'r') as file:
+        for line in file.readlines():
+            parts = line.strip().split(" | ")
+            if len(parts) == 3:  # Ensure the line has exactly 3 parts
+                guns.append(parts)
+    return guns
+
+# Function to select a gun by searching
+def select_gun(guns):
+    print("\nSearch and select a gun:")
+    search_term = input("Enter gun name or hex code: ").strip().lower()
+    filtered_guns = [gun for gun in guns if search_term in gun[2].lower() or search_term in gun[1].lower()]
+    
+    if not filtered_guns:
+        print("No guns found matching your search.")
+        return None
+    
+    print("\nAvailable guns:")
+    for i, gun in enumerate(filtered_guns):
+        print(f"{i + 1}: {gun[2]} | {gun[1]}")
+    
+    try:
+        selection = int(input("\nSelect a gun by number: ")) - 1
+        if 0 <= selection < len(filtered_guns):
+            return filtered_guns[selection]
+        else:
+            print("Invalid selection.")
+            return None
+    except ValueError:
+        print("Invalid input.")
+        return None
+
+# Function to modify .dat file and overwrite it in OUTPUT_FOLDER
+def update_dat_file(dat_file_path, changes, output_folder, previous_edits):
+    with open(dat_file_path, 'rb') as file:
+        data = file.read()
+
+    # Apply all changes (gun1_hex -> gun2_hex)
+    for gun1_hex, gun2_hex in changes:
+        # Ensure the gun1_hex is not already replaced
+        if gun1_hex in previous_edits:
+            print(f"Gun1 hex ({gun1_hex}) has already been replaced.")
+        else:
+            # Replace gun1_hex with gun2_hex
+            if bytes.fromhex(gun1_hex) in data:
+                data = data.replace(bytes.fromhex(gun1_hex), bytes.fromhex(gun2_hex))
+                previous_edits.add(gun1_hex)  # Track this modification
+                print(f"Updated: {gun1_hex} -> {gun2_hex}")
+            else:
+                print(f"Gun1 hex ({gun1_hex}) not found in the .dat file.")
+                return
+
+    # Ensure output folder exists
+    os.makedirs(output_folder, exist_ok=True)
+    
+    # Get the filename of the original .dat file
+    file_name = os.path.basename(dat_file_path)
+    
+    # Save the updated data to the output folder
+    output_path = os.path.join(output_folder, file_name)
+    with open(output_path, 'wb') as file:
+        file.write(data)
+    print(f"Updated file saved at: {output_path}")
+
+# Main script
+def main():
+    # Verify .dat files folder
+    if os.path.isdir(DAT_FILES_PATH):
+        dat_files = [file for file in os.listdir(DAT_FILES_PATH) if file.endswith('.dat')]
+        if dat_files:
+            dat_file_path = os.path.join(DAT_FILES_PATH, dat_files[0])
+            print(f"Found .dat file: {dat_file_path}")
+        else:
+            print("No .dat file found in the specified folder.")
+            return
+    else:
+        print(f"Invalid folder path: {DAT_FILES_PATH}")
+        return
+    
+    # Verify all_guns.txt file
+    if os.path.isfile(ALL_GUNS_PATH):
+        guns = read_guns(ALL_GUNS_PATH)
+        if not guns:
+            print("No valid guns found in all_guns.txt.")
+            return
+        print(f"Loaded {len(guns)} guns from all_guns.txt.")
+    else:
+        print(f"Invalid file path: {ALL_GUNS_PATH}")
+        return
+    
+    # Set to keep track of modified hex codes (previous edits)
+    previous_edits = set()
+
+    while True:
+        # Collect changes to apply
+        changes = []
+        print("\nEnter multiple values to edit (enter 'done' when finished):")
+        while True:
+            # Select Gun1
+            gun1 = select_gun(guns)
+            if not gun1:
+                return
+            print(f"Selected Gun1: {gun1[2]} | {gun1[1]}")
+            
+            # Select Gun2
+            gun2 = select_gun(guns)
+            if not gun2:
+                return
+            print(f"Selected Gun2: {gun2[2]} | {gun2[1]}")
+            
+            # Add to changes list
+            changes.append((gun1[1], gun2[1]))
+            
+            # Ask if user wants to add another change
+            another = input("\nDo you want to edit another value? (yes/no): ").strip().lower()
+            if another != "yes":
+                break
+        
+        # Update .dat file with all changes
+        update_dat_file(dat_file_path, changes, OUTPUT_FOLDER, previous_edits)
+        
+        # Ask if user wants to continue editing other values in a new round
+        continue_editing = input("\nDo you want to edit more values in another round? (yes/no): ").strip().lower()
+        if continue_editing != "yes":
+            break
+
+if __name__ == "__main__":
+    main()
