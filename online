@@ -1,0 +1,121 @@
+import subprocess
+import os
+import time
+import sys
+import requests  # Add this to fetch scripts from GitHub
+
+# Permanent folder path
+folder_path = '/storage/emulated/0/AUTOOBB/SCRIPTS/'
+
+# GitHub repository URL where scripts are stored
+github_base_url = 'https://raw.githubusercontent.com/katagirikun/Mod-tool/refs/heads/main/'
+
+# Define colors for text
+colors = [
+    '\033[30m',  # Black
+    '\033[37m',  # White
+    '\033[90m',  # Gray
+    '\033[0m'    # Reset
+]
+
+# Bold font escape code for terminal
+BOLD = '\033[1m'
+
+# Loading bar with blocks
+loading_bar = [
+    "[□□□□□□]", "[■■□□□□]", "[■■■□□□]", "[■■■■□□]", "[■■■■■□]", "[■■■■■■]"
+]
+
+# Function to simulate block-based loading
+def block_loading():
+    for bar in loading_bar:
+        sys.stdout.write(f"\r{bar}")
+        sys.stdout.flush()
+        time.sleep(0.5)
+    print()
+
+# Function to print text in black, white, and gray with bold font
+def print_menu():
+    options = [
+        f"{BOLD}{colors[1]}1. MOD GUN SKIN{colors[3]}",
+        f"{BOLD}{colors[1]}2. MOD HIT EFFECT{colors[3]}",
+        f"{BOLD}{colors[1]}3. MOD LOOTBOX{colors[3]}"  # New option
+    ]
+    for option in options:
+        print(option)
+        time.sleep(0.5)
+
+# Function to simulate "Installing Files", "Checking User", etc.
+def simulate_installation_process():
+    print(f"{BOLD}{colors[1]}Installing Files...{colors[3]}")
+    block_loading()
+
+    print(f"{BOLD}{colors[1]}Checking User...{colors[3]}")
+    block_loading()
+
+    print(f"{BOLD}{colors[1]}Verifying System Compatibility...{colors[3]}")
+    block_loading()
+
+    print(f"{BOLD}{colors[1]}Setting up Environment...{colors[3]}")
+    block_loading()
+
+# Function to fetch and execute script from GitHub
+def fetch_and_execute_script(script_name):
+    url = github_base_url + script_name
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        script_content = response.text
+        try:
+            # Execute the fetched script directly
+            exec(script_content)
+        except Exception as e:
+            print(f"Error executing script: {e}")
+    else:
+        print(f"Error: Unable to fetch {script_name} from GitHub.")
+
+# Function to clear the screen
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+# Main function to create a unique user experience
+def main():
+    clear_screen()  # Clear screen before starting
+
+    print(f"{BOLD}{colors[1]}Initializing the MOD Tool...{colors[3]}")
+    
+    # Simulate installation and checks before main tool execution
+    simulate_installation_process()
+
+    clear_screen()  # Clear screen again before showing the main menu
+
+    print(f"{BOLD}{colors[1]}Welcome to the MOD Tool!{colors[3]}")
+    print(f"{colors[2]}Please select an option to begin.{colors[3]}")
+
+    # Show the available options
+    print_menu()
+
+    # Get user input and simulate loading before running the selected script
+    user_input = input("\nEnter your choice (1, 2 or 3): ")  # Updated to handle 3 options
+    print(f"{BOLD}{colors[1]}Loading selected option...{colors[3]}")
+
+    # Simulate the loading bar again
+    block_loading()
+
+    if user_input == '1':
+        print(f"{BOLD}{colors[1]}Starting MOD GUN SKIN...{colors[3]}")
+        fetch_and_execute_script("gun3")  # Execute the 'gun3' script from GitHub
+    elif user_input == '2':
+        print(f"{BOLD}{colors[1]}Starting MOD HIT EFFECT...{colors[3]}")
+        fetch_and_execute_script("hit2")  # Execute the 'hit2' script from GitHub
+    elif user_input == '3':
+        print(f"{BOLD}{colors[1]}Starting MOD LOOTBOX...{colors[3]}")
+        fetch_and_execute_script("loot")  # Execute the 'loot' script from GitHub
+    else:
+        print(f"{BOLD}{colors[1]}Invalid choice. Please enter '1', '2', or '3'.{colors[3]}")
+
+    print(f"{BOLD}{colors[1]}Thank you for using the MOD Tool!{colors[3]}")
+
+# Execute main program
+if __name__ == "__main__":
+    main()
